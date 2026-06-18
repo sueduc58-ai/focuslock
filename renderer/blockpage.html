@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>접근 제한 — 미션 진행 중</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #0B0E14;
+  --text:   #E6E9F0;
+  --muted:  #8B95A8;
+  --accent: #FF6B35;
+  --line:   #232B3D;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif;
+  overflow: hidden;
+}
+
+/* 별 배경 */
+.stars {
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 8%  15%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 8%,  #fff4 50%, transparent 51%),
+    radial-gradient(2px 2px at 25% 72%, #fff3 50%, transparent 51%),
+    radial-gradient(1px 1px at 58% 85%, #fff4 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 55%, #fff3 50%, transparent 51%),
+    radial-gradient(2px 2px at 43% 32%, #fff4 50%, transparent 51%),
+    radial-gradient(1px 1px at 13% 92%, #fff3 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 40%, #fff4 50%, transparent 51%),
+    radial-gradient(2px 2px at 35% 18%, #fff2 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 60%, #fff3 50%, transparent 51%);
+  background-size: 600px 600px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 메인 컨테이너 */
+.wrap {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 0;
+}
+
+.eyebrow {
+  font-family: "Space Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.blocked-host {
+  font-family: "Space Mono", monospace;
+  font-size: 13px;
+  color: var(--muted);
+  background: rgba(255,107,53,0.08);
+  border: 1px solid rgba(255,107,53,0.2);
+  border-radius: 6px;
+  padding: 5px 14px;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  font-size: clamp(26px, 5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+/* 카운트다운 */
+.countdown-wrap {
+  margin-bottom: 8px;
+}
+
+.countdown {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(60px, 14vw, 100px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.countdown-label {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  margin-top: 8px;
+  margin-bottom: 44px;
+}
+
+/* 인용구 */
+.quote {
+  max-width: 520px;
+  padding: 18px 24px;
+  border-left: 2px solid var(--accent);
+  background: rgba(255,107,53,0.05);
+  border-radius: 0 10px 10px 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  text-align: left;
+  margin-bottom: 36px;
+  transition: opacity 0.4s;
+}
+
+/* 잠금 배지 */
+.lock-badge {
+  font-family: "Space Mono", monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid rgba(255,107,53,0.25);
+  background: rgba(255,107,53,0.08);
+  border-radius: 8px;
+  padding: 9px 20px;
+}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<main class="wrap">
+  <div class="eyebrow">MISSION CONTROL &nbsp;·&nbsp; 접근 제한</div>
+
+  <div class="blocked-host" id="blockedHost">{{HOST}}</div>
+
+  <h1>지금은 비행 모드입니다</h1>
+  <p class="sub">이 사이트는 집중 미션 동안 차단되어 있습니다.<br>궤도에서 이탈하지 마세요.</p>
+
+  <div class="countdown-wrap">
+    <div class="countdown" id="countdown">{{REMAIN_STR}}</div>
+    <div class="countdown-label">미션 종료까지</div>
+  </div>
+
+  <blockquote class="quote" id="quote"></blockquote>
+
+  <div class="lock-badge">🔒 미션 종료 전까지 해제 불가</div>
+</main>
+
+<script>
+const QUOTES = [
+  "발사 직전에 엔진을 끄는 로켓은 없다. 지금은 궤도에 오르는 구간이다.",
+  "위기관리란 위기가 오기 전에 정해둔 절차를 그냥 따르는 일이다. 지금이 그 절차다.",
+  "이 페이지가 떴다는 건, 5분 전의 내가 지금의 나를 지켜준 것이다.",
+  "작은 추진력이라도 방향이 맞으면 궤도는 누적된다.",
+  "지금 클릭 한 번이 오늘 하루 전체의 궤적을 바꾼다.",
+  "기회는 자격을 갖춘 사람이 아니라, 자리를 지키고 있던 사람에게 간다.",
+  "남은 시간을 보고 판단하라. 유튜브는 그 다음에도 그대로 있다.",
+  "재진입은 한 번뿐이다. 집중 구간에서 이탈하면 처음부터 다시 카운트다운해야 한다."
+];
+
+// 인용구 렌더
+let cur = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+document.getElementById('quote').textContent = cur;
+setInterval(() => {
+  const q = document.getElementById('quote');
+  let next;
+  do { next = QUOTES[Math.floor(Math.random() * QUOTES.length)]; } while (next === cur);
+  cur = next;
+  q.style.opacity = 0;
+  setTimeout(() => { q.textContent = cur; q.style.opacity = 1; }, 420);
+}, 9000);
+
+// 카운트다운 (서버가 주입한 남은 ms에서 시작)
+let remainMs = {{REMAIN_MS}};
+const el = document.getElementById('countdown');
+function fmt(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(s / 60);
+  return String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+el.textContent = fmt(remainMs);
+const start = Date.now();
+setInterval(() => {
+  const elapsed = Date.now() - start;
+  el.textContent = fmt(remainMs - elapsed);
+}, 1000);
+</script>
+</body>
+</html>

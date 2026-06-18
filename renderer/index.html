@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>FocusLock</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 커스텀 타이틀바 -->
+  <div class="titlebar">
+    <span class="titlebar-label">FOCUSLOCK</span>
+    <div class="titlebar-controls">
+      <button class="tb-btn" id="tbMin" title="최소화">—</button>
+      <button class="tb-btn tb-close" id="tbClose" title="닫기">✕</button>
+    </div>
+  </div>
+
+  <!-- 관리자 권한 경고 -->
+  <div class="admin-warn hidden" id="adminWarn">
+    ⚠️ 관리자 권한이 없습니다 — <strong>실행.bat</strong>으로 실행해야 차단이 적용됩니다.
+  </div>
+
+  <div class="panel">
+
+    <header class="hdr">
+      <div class="hdr-row">
+        <h1>집중 모드</h1>
+        <div class="status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">대기 중</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── 설정 화면 ── -->
+    <section id="setupView" class="view">
+
+      <!-- 시간 설정 -->
+      <div class="field">
+        <label class="field-label">미션 시간 (1분 ~ 23시간 59분)</label>
+        <div class="time-picker">
+          <div class="time-unit">
+            <button class="time-arrow" data-target="hour" data-dir="-1">▲</button>
+            <input id="hourInput" type="number" min="0" max="23" value="0" />
+            <button class="time-arrow" data-target="hour" data-dir="1">▼</button>
+            <span class="time-unit-label">시간</span>
+          </div>
+          <span class="time-sep">:</span>
+          <div class="time-unit">
+            <button class="time-arrow" data-target="min" data-dir="-1">▲</button>
+            <input id="minInput" type="number" min="0" max="59" value="30" />
+            <button class="time-arrow" data-target="min" data-dir="1">▼</button>
+            <span class="time-unit-label">분</span>
+          </div>
+        </div>
+        <div class="time-presets">
+          <button class="preset-chip" data-h="0" data-m="5">5분</button>
+          <button class="preset-chip" data-h="0" data-m="15">15분</button>
+          <button class="preset-chip" data-h="0" data-m="30">30분</button>
+          <button class="preset-chip" data-h="1" data-m="0">1시간</button>
+          <button class="preset-chip" data-h="2" data-m="0">2시간</button>
+          <button class="preset-chip" data-h="4" data-m="0">4시간</button>
+        </div>
+        <p class="time-total" id="timeTotal">총 30분</p>
+      </div>
+
+      <!-- 차단할 사이트 -->
+      <div class="field">
+        <label class="field-label">차단할 사이트</label>
+        <div class="site-list" id="siteList"></div>
+        <div class="site-add-row">
+          <input id="siteInput" type="text" placeholder="예: reddit.com" spellcheck="false" />
+          <button id="siteAddBtn" class="site-add-btn">+ 추가</button>
+        </div>
+        <p class="hint">Chrome · Edge · Firefox 전체에서 차단됩니다 (DNS).</p>
+      </div>
+
+      <!-- 차단할 앱 -->
+      <div class="field">
+        <label class="field-label">차단할 앱</label>
+        <div class="site-list" id="appList"></div>
+        <div class="site-add-row">
+          <input id="appInput" type="text" placeholder="예: KakaoTalk.exe" spellcheck="false" />
+          <button id="appAddBtn" class="site-add-btn">+ 추가</button>
+        </div>
+        <button id="appPickBtn" class="pick-btn">실행 중인 앱 목록에서 선택 ▸</button>
+        <p class="hint">세션 중 해당 앱이 켜지면 즉시 강제 종료됩니다.</p>
+      </div>
+
+      <button id="launchBtn" class="launch-btn">🚀 발사 — 집중 시작</button>
+
+      <!-- 통합 예약 섹션 -->
+      <div class="schedule-box" id="scheduleBox">
+        <div class="schedule-header" id="scheduleToggle">
+          <span class="schedule-title">⏰ 예약 시작</span>
+          <span class="sched-status-badge hidden" id="schedStatusBadge">예약됨</span>
+          <span class="schedule-arrow" id="scheduleArrow">▸</span>
+        </div>
+        <div class="schedule-body hidden" id="scheduleBody">
+
+          <!-- 시간 선택 (설정 상태) -->
+          <div id="schedSetup">
+            <p class="hint" style="margin-bottom:8px;">시작 시간 → 종료 시간 순으로 선택하세요.</p>
+
+            <div class="hour-section-label">AM 오전</div>
+            <div class="hour-chips" id="amChips"></div>
+            <div class="hour-section-label" style="margin-top:8px">PM 오후</div>
+            <div class="hour-chips" id="pmChips"></div>
+
+            <div class="sched-summary hidden" id="schedSummary"></div>
+
+            <div class="repeat-row">
+              <span class="repeat-label">매일 반복 <span class="hint" style="margin:0">(앱 꺼져도 자동 실행)</span></span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="repeatToggle" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <button id="scheduleBtn" class="schedule-submit-btn" disabled>시간을 선택하세요</button>
+          </div>
+
+          <!-- 예약 완료 상태 -->
+          <div class="schedule-active hidden" id="scheduleActive">
+            <div class="schedule-info">
+              <span class="schedule-info-label" id="schedActiveLabel">예약됨</span>
+              <span class="schedule-info-time" id="scheduleInfoTime">—</span>
+            </div>
+            <div class="schedule-countdown" id="scheduleCountdown">—</div>
+            <button id="scheduleCancelBtn" class="schedule-cancel-btn">예약 취소 / 해제</button>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── 진행 화면 ── -->
+    <section id="activeView" class="view hidden">
+
+      <div class="lock-notice">🔒 잠금 중 — 미션이 끝날 때까지 해제 불가</div>
+
+      <div class="countdown" id="countdownText">00:00</div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="field" id="activeSitesField">
+        <label class="field-label">차단 중인 사이트</label>
+        <div class="site-chips" id="activeSiteChips"></div>
+      </div>
+
+      <div class="field" id="activeAppsField">
+        <label class="field-label">차단 중인 앱</label>
+        <div class="site-chips" id="activeAppChips"></div>
+      </div>
+
+      <div class="app-close-hint">앱을 닫아도 차단은 유지됩니다.</div>
+
+    </section>
+
+    <!-- ── 주간 통계 ── -->
+    <section class="stats-section">
+      <div class="stats-header">
+        <span class="stats-title">지난 7일 집중 기록</span>
+        <span class="stats-total">누적 <span id="totalFocus">0분</span></span>
+      </div>
+      <div class="week-chart" id="weekChart"></div>
+      <div class="today-stats">
+        <div class="today-stat">
+          <span class="today-stat-value" id="completedCount">0</span>
+          <span class="today-stat-label">오늘 완료 세션</span>
+        </div>
+        <div class="today-stat-divider"></div>
+        <div class="today-stat">
+          <span class="today-stat-value" id="todayFocus">0분</span>
+          <span class="today-stat-label">오늘 집중 시간</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 실행 중인 앱 선택 모달 -->
+  <div class="picker-overlay hidden" id="pickerOverlay">
+    <div class="picker-modal">
+      <div class="picker-header">
+        <span>실행 중인 앱 선택</span>
+        <button class="picker-close" id="pickerClose">✕</button>
+      </div>
+      <input class="picker-search" id="pickerSearch" type="text" placeholder="앱 이름으로 검색..." spellcheck="false" />
+      <div class="picker-list" id="pickerList"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

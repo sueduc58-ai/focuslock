@@ -1,0 +1,57 @@
+{
+  "name": "focuslock",
+  "version": "1.0.0",
+  "description": "FocusLock — 집중 모드 데스크톱 앱",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.focuslock.app",
+    "productName": "FocusLock",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon128.png",
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "title": "FocusLock"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FocusLock",
+      "include": "installer.nsh"
+    },
+    "files": [
+      "**/*",
+      "!build-icon.js",
+      "!*.bat",
+      "!*.vbs",
+      "!*.ps1",
+      "!launcher.vbs",
+      "!restore-hosts.bat"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3",
+    "png2icons": "^2.0.1",
+    "sharp": "^0.35.1"
+  },
+  "dependencies": {
+    "node-forge": "^1.4.0",
+    "selfsigned": "^5.5.0"
+  }
+}

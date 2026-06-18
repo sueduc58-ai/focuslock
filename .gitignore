@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.vbs
+*.bat
+*.ps1
+.DS_Store

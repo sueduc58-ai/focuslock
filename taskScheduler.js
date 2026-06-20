@@ -84,10 +84,51 @@ function writeAutoSessionVbs() {
 
 function registerWin(timeStr) {
   try {
-    const vbsPath = writeAutoSessionVbs();
-    const tr = `wscript.exe "${vbsPath}"`;
+    const [hh, mm] = timeStr.split(':');
+    const xmlPath = path.join(getVbsDir(), 'task.xml');
+
+    // 패키징된 경우 EXE 직접 실행 (VBS 경유 시 권한 상속 실패)
+    // 개발 모드는 VBS 필요 (electron . 명령 실행)
+    let command, args;
+    if (app.isPackaged) {
+      command = process.execPath;
+      args = '--auto-session';
+    } else {
+      const vbsPath = writeAutoSessionVbs();
+      command = 'wscript.exe';
+      args = `"${vbsPath}"`;
+    }
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2000-01-01T${hh}:${mm}:00</StartBoundary>
+      <ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>${command}</Command>
+      <Arguments>${args}</Arguments>
+    </Exec>
+  </Actions>
+</Task>`;
+    fs.writeFileSync(xmlPath, xml, 'utf8');
     execSync(
-      `schtasks /create /tn "${TASK_NAME}" /tr "${tr}" /sc DAILY /st ${timeStr} /f /rl HIGHEST`,
+      `schtasks /create /tn "${TASK_NAME}" /xml "${xmlPath}" /f`,
       { encoding: 'utf8', timeout: 10000, stdio: 'pipe' }
     );
     return { ok: true };
